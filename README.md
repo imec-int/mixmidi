@@ -13,8 +13,7 @@ Niet te verwarren met MixMini :japanese_ogre:
 
 * Run `node app.js`
 * You now have a virtual Midi output device called `Test Input`. ( "Output" for another application, "input" for node.js :japanese_ogre: )
-* You need some software that can connect to this device. I used GarageBand with MidiO ( http://www.bulletsandbones.com/GB/GBFAQ.html#getmidio ). If you add a Software Instrument track in GarageBand you can use midiO as a sound generator. Clicking on the orange ball opens an additional config window where you can select Test Input and assign a channel.
-![Screenshot](public/images/screenshot.png)
-Channels 1-4 correspond to different signal oscillators (e.g. sine, square... defined in javascripts/index.js) in the index HTML page. The program number may correspond to different instruments (the "general Midi" mapping is also in midimapping.js) but appears not to be used by MidiO.
-
+* You need some software that can connect to this device. I used GarageBand with MidiO ( http://www.bulletsandbones.com/GB/GBFAQ.html#getmidio ). If you add a Software Instrument track in GarageBand you can use midiO as a sound generator. Clicking on the orange ball opens an additional config window where you can select Test Input and assign a channel.<br/>
+![Screenshot](public/images/screenshot.png)<br/>
+Channels 1-4 correspond to different signal oscillators (e.g. sine, square... defined in javascripts/index.js) in the index HTML page. The program number may correspond to different instruments (the "general Midi" mapping is also in midimapping.js) but appears not to be used by MidiO.<br/>
 Playing your instrument in GarageBand can be done with Window->Musical Typing
