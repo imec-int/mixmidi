@@ -1,19 +1,22 @@
 var App = function(){
 	var socket = null;
 	var context = null;
-	var init = function (){
+	var init = function (callback){
 		console.log("init");
-		initSocket();
-		context = new webkitAudioContext();
-	};
 
+		$.getScript("http://dev1.mixlab.be:3000/socket.io/socket.io.js", function(){
+			initSocket();
+			callback();
+		});
+	};
+	var onNoteOnHandler, onNoteOffHandler;
 	var notes = [];
 
 	var initSocket = function (){
 		if(socket) return; // already initialized
 
 		// socket.io initialiseren
-		socket = io.connect(window.location.hostname);
+		socket = io.connect('http://dev1.mixlab.be:3000');
 		// some debugging statements concerning socket.io
 		socket.on('reconnecting', function(seconds){
 			console.log('reconnecting in ' + seconds + ' seconds');
@@ -36,8 +39,6 @@ var App = function(){
 
 		}
 		if(eventType == 0x09){
-			// noteOn
-			// noteOn with velocity 0 = noteOff
 			if(message[2] == 0)
 				noteOff(message[1], message[2], channel);
 			else noteOn(message[1], message[2], channel);
@@ -46,38 +47,24 @@ var App = function(){
 	};
 
 	var noteOn = function(note, velocity, channel){
-
-		var oscillator = context.createOscillator();
-		var gainNode = context.createGainNode();
-		if(0 <= channel && channel <= 3)
-			// Sine wave is type = 0 -> default
-			// Square wave is type = 1
-			// Sawtooth wave is type = 2
-			// Triangle wave is type = 3
-			oscillator.type = channel;
-		oscillator.frequency.value = 440 * Math.pow(2,(note-69)/12); //note to frequency mapping
-		oscillator.connect(gainNode);
-		gainNode.connect(context.destination);
-		gainNode.gain.value = 0.1 + 0.9 * velocity / 127.0;
-		if(notes[note]) notes[note].noteOff(0);
-		notes[note] = oscillator;
-		notes[note].noteOn(0);
+		onNoteOnHandler(note, velocity, channel);
 	}
 
 	var noteOff = function(note, velocity, channel){
-		if(notes[note]){
-			notes[note].noteOff(0);
-			notes[note] = null;
-		}
-
+		onNoteOffHandler(note, velocity, channel);
 	}
-
+	var onNoteOn = function(callback){
+		onNoteOnHandler = callback;
+	}
+	var onNoteOff = function(callback){
+		onNoteOffHandler = callback;
+	}
 	return {
-		init: init
+		init: init,
+		onNoteOn: onNoteOn,
+		onNoteOff: onNoteOff
 	};
+
 };
 
-$(function(){
-	var app = new App();
-	app.init();
-});
+

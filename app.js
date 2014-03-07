@@ -32,6 +32,8 @@ var server = app.listen(app.get('port'), function() {
 
 var io = socketio.listen(server);
 io.set('log level', 0);
+// test xhr polling
+// io.set('transports', ['xhr-polling']);
 
 
 app.get('/', function (req, res){
