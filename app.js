@@ -199,3 +199,12 @@ function listFiles(callback){
 // setTimeout(haltPlaying, 5000);
 // listFiles(function(err, data){console.log(data);});
 
+// if recording and Ctrl-C: stop
+process.on('SIGINT',
+	function () {
+		if(isRecording)
+			stopRecording();
+		process.exit();
+	}
+);
+
