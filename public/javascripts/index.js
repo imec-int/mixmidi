@@ -26,6 +26,15 @@ var App = function(){
 			console.log('failed to reconnect');
 		});
 		socket.on('midi', processMidi);
+
+		$('#iosenable').click(function (event) {
+			noteOn(95,100,0);
+			setTimeout(function () {
+				noteOff(95,100,0);
+			},500);
+		});
+
+
 	};
 	var processMidi = function(message){
 		var eventType = message[0] >> 4;
