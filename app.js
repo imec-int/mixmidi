@@ -40,14 +40,17 @@ app.get('/', function (req, res){
 	res.render('index', { title: 'Hello World' });
 });
 
-
-
 // MIDI CONFIG
 
 // Set up a new input (= output for other program e.g. garageband with midio (http://www.bulletsandbones.com/GB/GBFAQ.html#getmidio))
 var midiInput = new midi.input();
-// virtual ports; we don't have actual midi device connected
-midiInput.openVirtualPort("Test Input");
+if(midiInput.getPortCount() > 0){
+	console.log(midiInput.getPortName(0)); // USB MIDI 1x1 Port 1 for Kasper's device
+	midiInput.openPort(0);
+} else{
+	// open virtual port; in case we don't have actual midi device connected
+	midiInput.openVirtualPort("Test Input");
+}
 
 // Set up output (=input via midi instead of ws for other program e.g. http://webaudiodemos.appspot.com/midi-synth/index.html)
 // first enable web-midi-api in chrome://flags )
@@ -64,6 +67,8 @@ midiInput.openVirtualPort("Test Input");
 midiInput.on('message', function(deltaTime, message) {
 	// next line sends to other midi device as well
 	// midiOutput.sendMessage(message);
+	console.log(deltaTime);
+	console.log(message);
 	io.sockets.emit('midi', message);
     console.log(mapping.parseMessage(message));
 });
