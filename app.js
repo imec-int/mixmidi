@@ -45,10 +45,11 @@ app.get('/', function (req, res){
 // Set up a new input (= output for other program e.g. garageband with midio (http://www.bulletsandbones.com/GB/GBFAQ.html#getmidio))
 var midiInput = new midi.input();
 if(midiInput.getPortCount() > 0){
-	console.log(midiInput.getPortName(0)); // USB MIDI 1x1 Port 1 for Kasper's device
+	console.log("Using " + midiInput.getPortName(0)); // USB MIDI 1x1 Port 1 for Kasper's device
 	midiInput.openPort(0);
 } else{
 	// open virtual port; in case we don't have actual midi device connected
+	console.log("Using virtual MIDI device");
 	midiInput.openVirtualPort("Test Input");
 }
 
