@@ -185,6 +185,7 @@ function haltPlaying(){
 				// console.log(JSON.stringify(playingNotes));
 			}
 		}
+		playingNotes = {};
 	}, 2000);
 }
 
