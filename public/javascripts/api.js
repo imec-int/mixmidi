@@ -3,7 +3,7 @@ var MixApi = function(){
 	var context = null;
 	var init = function (callback){
 		console.log("init");
-
+		// TODO change host
 		$.getScript("http://dev1.mixlab.be:3000/socket.io/socket.io.js", function(){
 			initSocket();
 			callback();
