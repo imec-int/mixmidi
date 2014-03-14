@@ -9,6 +9,8 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var socketio = require('socket.io');
+var fs = require('fs');
+var async = require('async');
 
 var app = express();
 
@@ -42,6 +44,11 @@ app.get('/', function (req, res){
 
 // MIDI CONFIG
 
+var isRecording = false;
+var midiBuffer = [];
+var stopPlaying = false;
+var playingNotes = {};
+
 // Set up a new input (= output for other program e.g. garageband with midio (http://www.bulletsandbones.com/GB/GBFAQ.html#getmidio))
 var midiInput = new midi.input();
 if(midiInput.getPortCount() > 0){
@@ -68,8 +75,126 @@ if(midiInput.getPortCount() > 0){
 midiInput.on('message', function(deltaTime, message) {
 	// next line sends to other midi device as well
 	// midiOutput.sendMessage(message);
-	console.log(deltaTime);
-	console.log(message);
+	if(isRecording){
+		midiBuffer.push({deltaTime: deltaTime, message: message});
+		// keep track of which notes are playing with velocity different from 0
+		if(message.length == 3 && message[0] >> 4 == 0x9 && message[2] != 0){
+			if(!playingNotes[message[0]]) playingNotes[message[0]] = {}; // this object will contain the playing notes per channel (channel is encoded in message[0])
+			playingNotes[message[0]][message[1]] = true;
+		}
+	}
 	io.sockets.emit('midi', message);
     console.log(mapping.parseMessage(message));
 });
+
+function startRecording() {
+	isRecording = true;
+}
+
+function stopRecording() {
+	isRecording = false;
+	// stop playing notes that are still playing
+	var firstParts = Object.keys(playingNotes); // this contains noteOn && channel
+	for(var i = 0; i < firstParts.length; i++){
+		// console.log(firstParts[i]);
+		var secondParts = Object.keys(playingNotes[firstParts[i]]); // this contains which note
+		for(var j = 0; j < secondParts.length; j++){
+			// velocity 0 is same as note off -> turn them all off
+			midiBuffer.push({deltaTime: 0, message: [firstParts[i], secondParts[j], 0]})
+		}
+	}
+	fs.writeFileSync(__dirname + '/mididata/' + Date.now(), JSON.stringify(midiBuffer));
+	console.log('recording stopped');
+	midiBuffer = [];
+	playingNotes = {};
+}
+
+function playFile(fileName) {
+	stopPlaying = false;
+	fs.readFile(fileName, function(err, data){
+		if(err){
+			console.log(err);
+			return;
+		}
+		playNextSamples(JSON.parse(data));
+	});
+}
+
+var currentSample = 0;
+function playNextSamples(samples, callback){
+	if(currentSample < samples.length && !stopPlaying){
+		setTimeout(function(){
+			if(callback && currentSample == samples.length - 1) {// op laatste sample -> callback voor loop
+				// also keep track of playing stuff for haltPlaying function
+				var message = samples[currentSample].message;
+				if(message.length == 3 && message[0] >> 4 == 0x9 && message[2] != 0){
+					if(!playingNotes[message[0]]) playingNotes[message[0]] = {}; // this object will contain the playing notes per channel (channel is encoded in message[0])
+					playingNotes[message[0]][message[1]] = true;
+				}
+				io.sockets.emit('midi', samples[currentSample].message);
+				// console.log(message);
+				return callback(null);
+			}
+			// also keep track of playing stuff for haltPlaying function
+			var message = samples[currentSample].message;
+			if(message.length == 3 && message[0] >> 4 == 0x9 && message[2] != 0){
+				if(!playingNotes[message[0]]) playingNotes[message[0]] = {}; // this object will contain the playing notes per channel (channel is encoded in message[0])
+				playingNotes[message[0]][message[1]] = true;
+			}
+			io.sockets.emit('midi', samples[currentSample++].message);
+			// console.log(message);
+			playNextSamples(samples, callback);
+		}, samples[currentSample].deltaTime * 1000.0); //deltaTime is in seconds instead of milliseconds
+	}
+}
+
+function loopFile(fileName){
+	stopPlaying = false;
+	fs.readFile(fileName, function(err, data){
+		if(err){
+			console.log(err);
+			return;
+		}
+		var samples = JSON.parse(data);
+		async.whilst(
+			function() { return stopPlaying != true;},
+			function(callback) {
+				console.log('next iteration');
+				currentSample = 0;
+				playNextSamples(samples, callback);
+			},
+			function(err) {
+				console.log('loop stopped');
+			}
+		);
+	});
+}
+
+function haltPlaying(){
+	stopPlaying = true;
+	console.log('stop playing');
+	// stop playing notes that are still playing. Do this after timeout, cause some notes might still be playing
+	setTimeout(function(){
+		var firstParts = Object.keys(playingNotes); // this contains noteOn && channel
+		for(var i = 0; i < firstParts.length; i++){
+			// console.log(firstParts[i]);
+			var secondParts = Object.keys(playingNotes[firstParts[i]]); // this contains which note
+			for(var j = 0; j < secondParts.length; j++){
+				// velocity 0 is same as note off -> turn them all off
+				io.sockets.emit('midi', [firstParts[i], secondParts[j], 0]);
+				// console.log(JSON.stringify(playingNotes));
+			}
+		}
+	}, 2000);
+}
+
+function listFiles(callback){
+	fs.readdir(__dirname + '/mididata/', callback);
+}
+
+// startRecording();
+// setTimeout(stopRecording, 20000);
+// loopFile(__dirname + '/mididata/1394806910624');
+// setTimeout(haltPlaying, 5000);
+// listFiles(function(err, data){console.log(data);});
+
