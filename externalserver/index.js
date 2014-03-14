@@ -8,6 +8,7 @@ $(function(){
 		app.onNoteOn(function(note, velocity, channel){
 			var oscillator = context.createOscillator();
 			var gainNode = context.createGainNode();
+			// map different channels to different types of oscillators
 			if(0 <= channel && channel <= 3)
 				// Sine wave is type = 0 -> default
 				// Square wave is type = 1
