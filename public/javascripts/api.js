@@ -4,7 +4,7 @@ var MixApi = function(){
 	var init = function (callback){
 		console.log("init");
 		// TODO change host
-		$.getScript("http://dev1.mixlab.be:3000/socket.io/socket.io.js", function(){
+		$.getScript("http://mixmini.mixlab.be:3000/socket.io/socket.io.js", function(){
 			initSocket();
 			callback();
 		});
@@ -16,7 +16,7 @@ var MixApi = function(){
 		if(socket) return; // already initialized
 
 		// socket.io initialiseren
-		socket = io.connect('http://dev1.mixlab.be:3000');
+		socket = io.connect('http://mixmini.mixlab.be:3000');
 		// some debugging statements concerning socket.io
 		socket.on('reconnecting', function(seconds){
 			console.log('reconnecting in ' + seconds + ' seconds');
