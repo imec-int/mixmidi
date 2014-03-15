@@ -122,8 +122,16 @@ function playFile(fileName) {
 
 var currentSample = 0;
 function playNextSamples(samples, callback){
+
 	if(currentSample < samples.length && !stopPlaying){
+
+		var currentDeltaTime = samples[currentSample].deltaTime * 1000.0;
+		currentDeltaTime = currentDeltaTime*10;
+		console.log(currentDeltaTime);
+
 		setTimeout(function(){
+
+
 			if(callback && currentSample == samples.length - 1) {// op laatste sample -> callback voor loop
 				// also keep track of playing stuff for haltPlaying function
 				var message = samples[currentSample].message;
@@ -135,6 +143,8 @@ function playNextSamples(samples, callback){
 				// console.log(message);
 				return callback(null);
 			}
+
+
 			// also keep track of playing stuff for haltPlaying function
 			var message = samples[currentSample].message;
 			if(message.length == 3 && message[0] >> 4 == 0x9 && message[2] != 0){
@@ -144,7 +154,9 @@ function playNextSamples(samples, callback){
 			io.sockets.emit('midi', samples[currentSample++].message);
 			console.log(message);
 			playNextSamples(samples, callback);
-		}, samples[currentSample].deltaTime * 1000.0); //deltaTime is in seconds instead of milliseconds
+
+
+		}, currentDeltaTime); //deltaTime is in seconds instead of milliseconds
 	}
 }
 
