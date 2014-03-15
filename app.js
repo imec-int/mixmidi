@@ -142,7 +142,7 @@ function playNextSamples(samples, callback){
 				playingNotes[message[0]][message[1]] = true;
 			}
 			io.sockets.emit('midi', samples[currentSample++].message);
-			// console.log(message);
+			console.log(message);
 			playNextSamples(samples, callback);
 		}, samples[currentSample].deltaTime * 1000.0); //deltaTime is in seconds instead of milliseconds
 	}
@@ -195,7 +195,7 @@ function listFiles(callback){
 
 // startRecording();
 // setTimeout(stopRecording, 20000);
-// loopFile(__dirname + '/mididata/1394806910624');
+loopFile(__dirname + '/mididata/test');
 // setTimeout(haltPlaying, 5000);
 // listFiles(function(err, data){console.log(data);});
 
